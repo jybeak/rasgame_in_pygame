@@ -1,6 +1,6 @@
 import pygame
 import random
-import chicken, background, stage01_monster
+import chicken, background, stage01_monster, ui
 
 from time import sleep
 
@@ -10,19 +10,17 @@ pad_width = 600
 pad_heigth = 480
 background_width = 799
 
-def drawObject(obj,x,y):
+def drawObject(obj,x,y):     #그리기
     global gamepad
     gamepad.blit(obj,(x,y))
 
-def runGame():
+def runGame():     #시작
     global gamepad, clock, chicken, background1, background2
-    global blue_monster, bullet
+    global blue_monster, red_monster, bullet, ui
 
     bullet_xy = []
 
     backgound_color_gray = True
-    background1.pos_x = 0
-    background2.pos_x = background_width
 
 
     crashed = False
@@ -33,21 +31,6 @@ def runGame():
             if event.type == pygame.QUIT:
                 crashed = True
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE:
-                    if backgound_color_gray == True:
-                        backgound_color_gray = False
-                        print(backgound_color_gray)
-                        print(blue_monster.pos_x)
-                    else:
-                        backgound_color_gray = True
-                        print(backgound_color_gray)
-                        print(blue_monster.pos_x)
-                elif event.key == pygame.K_LCTRL:
-                    bullet_x = chicken.pos_x + 80
-                    bullet_y = chicken.pos_y + 25
-                    bullet_xy.append([bullet_x, bullet_y])
-                    print(blue_monster.pos_x)
-            if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_UP:
                     chicken.change_pos_y = -15
                 elif event.key == pygame.K_DOWN:
@@ -56,27 +39,22 @@ def runGame():
                     chicken.change_pos_x = -15
                 elif event.key == pygame.K_RIGHT:
                     chicken.change_pos_x = 15
+                elif event.key == pygame.K_LCTRL:
+                    bullet_x = chicken.pos_x + 80
+                    bullet_y = chicken.pos_y + 25
+                    bullet_xy.append([bullet_x, bullet_y])
+                    chicken.health -= 10
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_UP or event.key == pygame.K_DOWN:
                     chicken.change_pos_y = 0
                 elif event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
-                    chicken.change_pos_x = 0
+                    chicken.change_pos_x = 0   #키입력
 
-        chicken.pos_x += chicken.change_pos_x
-        chicken.pos_y += chicken.change_pos_y
-        if chicken.pos_x < -30:
-            chicken.pos_x = -30
-        elif chicken.pos_x > pad_width-30:
-            chicken.pos_x = pad_width-30
-        if chicken.pos_y <-30:
-            chicken.pos_y = -30
-        elif chicken.pos_y > pad_heigth-30:
-            chicken.pos_y = pad_heigth-30
-
-        blue_monster.pos_x -= 15
-        if blue_monster.pos_x <= -40:
-            blue_monster.pos_x = pad_width + 30
-            blue_monster.pos_y = random.randrange(0, pad_heigth)
+        chicken.pos()
+        blue_monster.pos()
+        red_monster.pos()
+        background1.pos()
+        background2.pos()
 
 
         
@@ -88,23 +66,18 @@ def runGame():
                 if bxy[0] >= pad_width:
                     bullet_xy.remove(bxy)
 
-        background1.pos_x-=2
-        background2.pos_x-=2
-
-
-
-        if background1.pos_x < -background_width:
-            background1.pos_x = 0
-        if background2.pos_x < 0:
-            background2.pos_x = background_width
-
         
 
         drawObject(background1.image, background1.pos_x, 0)
         drawObject(background2.image, background2.pos_x, 0)
         drawObject(blue_monster.image, blue_monster.pos_x, blue_monster.pos_y)
+        drawObject(red_monster.image, red_monster.pos_x, red_monster.pos_y)
         drawObject(chicken.image, chicken.pos_x, chicken.pos_y)
-        
+        drawObject(ui.healthbar_image, pad_width*1/3, pad_heigth*9/10)
+        for HP in range(chicken.health):
+            drawObject(ui.health_image, HP + pad_width*1/3 + 3  , pad_heigth*9/10 + 3)
+
+
         if len(bullet_xy) != 0:
             for bx,by in bullet_xy:
                 drawObject(bullet, bx, by)
@@ -117,18 +90,19 @@ def runGame():
     quit()
 
 def initGame():
-    global gamepad, clock, chicken, background1, background2, blue_monster, bullet
+    global gamepad, clock, chicken, background1, background2, blue_monster, red_monster, bullet, ui
 
     pygame.init()
     gamepad = pygame.display.set_mode((pad_width, pad_heigth))
     pygame.display.set_caption('ChickenGun')
     chicken = chicken.Chicken()
-    background1 = background.Background()
-    background2 = background.Background()
+    background1 = background.Background1()
+    background2 = background.Background2()
     blue_monster = stage01_monster.Blue_Monster()
+    red_monster = stage01_monster.Red_Monster()
+    ui = ui.Ui()
     bullet = pygame.image.load('resources/images/bullet.png')
     clock = pygame.time.Clock()
     runGame()
 
 initGame()
-
