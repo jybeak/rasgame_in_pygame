@@ -11,4 +11,5 @@ class Ui:
     backgroundstatesun_image = pygame.image.load('resources/images/backgroundstatesun.png')
     backgroundstatemoon_image = pygame.image.load('resources/images/backgroundstatemoon.png')
     score = 0
+    boom_count = 3
 
