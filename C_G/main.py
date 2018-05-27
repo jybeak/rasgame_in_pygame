@@ -10,8 +10,14 @@ pad_heigth = 480
 background_width = 799
 background_night_SW = False
 
-boom_start_time = time.time()
-boom_end_time = 0
+boom_time = time.time()
+boom_count = 1
+
+blue_monster_time = time.time()
+blue_monster_count = 0
+
+red_monster_time = time.time()
+red_monster_count = 0
 
 def collide(a, b):
     left_a, bottom_a, right_a, top_a = a.get_bb()
@@ -25,14 +31,14 @@ def collide(a, b):
     return True
 
 def check_collision_chicken_monsters():
-    if collide(chicken, blue_monster):
-        blue_monster.pos_x = pad_width + 30
-        blue_monster.pos_y = random.randrange(0, pad_heigth - 50)
-        chicken.health -= 10
-    if collide(chicken, red_monster):
-        red_monster.pos_x = pad_width + 30
-        red_monster.pos_y = random.randrange(0, pad_heigth - 50)
-        chicken.health -= 10
+    for i in blue_monsters:
+        if collide(chicken, i):
+            blue_monsters.remove(i)
+            chicken.health -= 10
+    for i in red_monsters:
+        if collide(chicken, i):
+            red_monsters.remove(i)
+            chicken.health -= 10
 
 def drawObject(obj,x,y):     #그리기
     gamepad.blit(obj,(x,y))
@@ -75,7 +81,9 @@ def drawBoomcount(count): #폭탄개수표시
     
 def runGame():     #시작
     global gamepad, clock, chicken, background1, background2
-    global blue_monster, red_monster, bullet, ui, background_night_SW , missile
+    global blue_monsters, red_monster, bullet, ui, background_night_SW , missile
+    global blue_monster_time, blue_monster_count
+    global red_monster_time, red_monster_count
 
     bullets = []
     missiles = []
@@ -128,14 +136,37 @@ def runGame():     #시작
                     chicken.change_pos_y = 0
                 elif event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
                     chicken.change_pos_x = 0   #키입력
+#=========================================================================
+        blue_monster_current = time.time()
+        blue_monster_count = blue_monster_time - blue_monster_current 
+        if (blue_monster_count < -2):
+            blue_monsters.append(stage01_monster.Blue_Monster())
+            blue_monster_count = -2
+            blue_monster_time = time.time()
+            print(len(blue_monsters))
+
+        red_monster_current = time.time()
+        red_monster_count = red_monster_time - red_monster_current 
+        if (red_monster_count < -3):
+            red_monsters.append(stage01_monster.Red_Monster())
+            red_monster_count = -3
+            red_monster_time = time.time()
+           
+
+
+
+
+
 #======================================position update======================================
         chicken.pos()
-        blue_monster.pos()
-        red_monster.pos()
+        for i in blue_monsters:
+            i.pos()
+        for i in red_monsters:
+            i.pos()
         background1.pos()
         background2.pos()
 
-#==========================================draw================================================
+#==========================================>draw================================================
 
         drawObject(background1.image, background1.pos_x, 0)
         drawObject(background2.image, background2.pos_x, 0)
@@ -146,8 +177,10 @@ def runGame():     #시작
             drawObject(ui.backgroundnight_image, 0, 0)
             drawObject(ui.backgroundstatewindow_image, 0, 0)
             drawObject(ui.backgroundstatemoon_image, 0, 0)
-        drawObject(blue_monster.image, blue_monster.pos_x, blue_monster.pos_y)
-        drawObject(red_monster.image, red_monster.pos_x, red_monster.pos_y)
+        for i in blue_monsters:
+            drawObject(i.image, i.pos_x, i.pos_y)
+        for i in red_monsters:
+            drawObject(i.image, i.pos_x, i.pos_y)
         drawObject(chicken.image, chicken.pos_x, chicken.pos_y)
 
 
@@ -169,7 +202,7 @@ def runGame():     #시작
         drawScore(ui.score)
         drawBoomcount(ui.boom_count)
         drawObject(missile, pad_width * 11 / 13, pad_heigth * 9 / 10)
-#==========================================draw================================================
+#==========================================<draw================================================
         if len(bullets) != 0:     #총알 움직임 충돌처리
             for i,bxy in enumerate(bullets):
                 bxy[0] += 25
@@ -236,7 +269,8 @@ def runGame():     #시작
     quit()
 
 def initGame():
-    global gamepad, clock, chicken, background1, background2, blue_monster, red_monster, bullet, ui, missile, boom, bigboom
+    global gamepad, clock, chicken, background1, background2
+    global blue_monsters, red_monsters, bullet, ui, missile, boom, bigboom
 
     pygame.init()
     gamepad = pygame.display.set_mode((pad_width, pad_heigth))
@@ -244,8 +278,8 @@ def initGame():
     chicken = chicken.Chicken()
     background1 = background.Background1()
     background2 = background.Background2()
-    blue_monster = stage01_monster.Blue_Monster()
-    red_monster = stage01_monster.Red_Monster()
+    blue_monsters = []
+    red_monsters = []
     ui = ui.Ui()
     bullet = pygame.image.load('resources/images/bullet.png')
     missile = pygame.image.load('resources/images/missile.png')
