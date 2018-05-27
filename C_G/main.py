@@ -8,8 +8,10 @@ WHITE = (255, 255, 255)
 pad_width = 600
 pad_heigth = 480
 background_width = 799
+background_night_SW = False
 
-background_SW = 0
+boom_start_time = time.time()
+boom_end_time = 0
 
 def collide(a, b):
     left_a, bottom_a, right_a, top_a = a.get_bb()
@@ -21,9 +23,6 @@ def collide(a, b):
     if bottom_a > top_b : return False
 
     return True
-
-    
-
 
 def check_collision_chicken_monsters():
     if collide(chicken, blue_monster):
@@ -37,7 +36,31 @@ def check_collision_chicken_monsters():
 
 def drawObject(obj,x,y):     #그리기
     gamepad.blit(obj,(x,y))
-    
+
+#=========================================================폭탄그리기========================================
+def blue_drawBoom():
+    boom_x = blue_monster.pos_x
+    boom_y = blue_monster.pos_y
+    gamepad.blit(boom, (boom_x, boom_y))
+
+def red_drawBoom():
+    boom_x = red_monster.pos_x
+    boom_y = red_monster.pos_y
+    gamepad.blit(boom, (boom_x, boom_y))
+
+def blue_drawBigBoom():
+    boom_x = blue_monster.pos_x-25
+    boom_y = blue_monster.pos_y-25
+    gamepad.blit(bigboom, (boom_x, boom_y))
+
+def red_drawBigBoom():
+    boom_x = red_monster.pos_x-25
+    boom_y = red_monster.pos_y-25
+    gamepad.blit(bigboom, (boom_x, boom_y))
+#========================================================= UI========================================
+
+
+
 def drawScore(count): #점수표시
     font = pygame.font.SysFont(None, 40)
     text = font.render('Score:' + str(count), True, (255, 255, 255))
@@ -52,28 +75,28 @@ def drawBoomcount(count): #폭탄개수표시
     
 def runGame():     #시작
     global gamepad, clock, chicken, background1, background2
-    global blue_monster, red_monster, bullet, ui, background_SW , boom
+    global blue_monster, red_monster, bullet, ui, background_night_SW , missile
 
     bullets = []
-    booms = []
+    missiles = []
 
     crashed = False
     while not crashed:
         gamepad.fill(WHITE)
-
-
+#==================================ras input====================================================
+#==================================key board input================================================
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 crashed = True
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_UP:
-                    chicken.change_pos_y = -15
+                    chicken.change_pos_y = -25
                 elif event.key == pygame.K_DOWN:
-                    chicken.change_pos_y = 15
+                    chicken.change_pos_y = 25
                 elif event.key == pygame.K_LEFT:
-                    chicken.change_pos_x = -15
+                    chicken.change_pos_x = -25
                 elif event.key == pygame.K_RIGHT:
-                    chicken.change_pos_x = 15
+                    chicken.change_pos_x = 25
                 elif event.key == pygame.K_LCTRL:
                     bullet_pos_x = chicken.pos_x + 80
                     bullet_pos_y = chicken.pos_y + 25
@@ -83,28 +106,46 @@ def runGame():     #시작
                     if ui.boom_count != 0:
                         boom_pos_x = chicken.pos_x + 80
                         boom_pos_y = chicken.pos_y + 25
-                        booms.append([boom_pos_x,boom_pos_y])
+                        missiles.append([boom_pos_x,boom_pos_y])
                         ui.boom_count -= 1
                     print(ui.boom_count)
-                    print(booms)
+                    print(missiles)
                 elif event.key == pygame.K_0:
-                    if chicken.skillgauge > 194:
+                    if chicken.skillgauge >= 194:
+                        time.sleep(0.5)
                         chicken.skillgauge = 0
+                        blue_monster.pos_x = pad_width +400
+                        blue_monster.pos_y = random.randrange(0, pad_heigth - 50)
+                        red_monster.pos_x = pad_width + 200
+                        red_monster.pos_y = random.randrange(0, pad_heigth - 50)
+                elif event.key == pygame.K_9:
+                    if background_night_SW == False:
+                        background_night_SW = True
+                    elif background_night_SW == True:
+                        background_night_SW = False
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_UP or event.key == pygame.K_DOWN:
                     chicken.change_pos_y = 0
                 elif event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
                     chicken.change_pos_x = 0   #키입력
-
+#======================================position update======================================
         chicken.pos()
         blue_monster.pos()
         red_monster.pos()
         background1.pos()
         background2.pos()
 
+#==========================================draw================================================
 
         drawObject(background1.image, background1.pos_x, 0)
         drawObject(background2.image, background2.pos_x, 0)
+        if background_night_SW == 0:
+            drawObject(ui.backgroundstatewindow_image, 0, 0)
+            drawObject(ui.backgroundstatesun_image, 0, 0)
+        elif background_night_SW == 1:
+            drawObject(ui.backgroundnight_image, 0, 0)
+            drawObject(ui.backgroundstatewindow_image, 0, 0)
+            drawObject(ui.backgroundstatemoon_image, 0, 0)
         drawObject(blue_monster.image, blue_monster.pos_x, blue_monster.pos_y)
         drawObject(red_monster.image, red_monster.pos_x, red_monster.pos_y)
         drawObject(chicken.image, chicken.pos_x, chicken.pos_y)
@@ -114,17 +155,9 @@ def runGame():     #시작
         if len(bullets) != 0:
             for bx,by in bullets:
                 drawObject(bullet,bx,by)
-        if len(booms) != 0:
-            for bx,by in booms:
-                drawObject(boom,bx,by)
-        
-
-
-        drawObject(ui.backgroundstatewindow_image, 0, 0)
-        if background_SW == 0:
-            drawObject(ui.backgroundstatesun_image, 0, 0)
-        elif background_SW == 1:
-            drawObject(ui.backgroundstatemoon_image, 0, 0)
+        if len(missiles) != 0:
+            for bx,by in missiles:
+                drawObject(missile, bx, by)
 
         drawObject(ui.healthbar_image, pad_width*3/7, pad_heigth*9/10)
         drawObject(ui.skillgaugebar_imgae, pad_width * 1/18, pad_heigth * 9 / 10)
@@ -135,14 +168,16 @@ def runGame():     #시작
 
         drawScore(ui.score)
         drawBoomcount(ui.boom_count)
-
+        drawObject(missile, pad_width * 11 / 13, pad_heigth * 9 / 10)
+#==========================================draw================================================
         if len(bullets) != 0:     #총알 움직임 충돌처리
             for i,bxy in enumerate(bullets):
-                bxy[0] += 15
+                bxy[0] += 25
                 bullets[i][0] = bxy[0]
-                if bxy[0] > blue_monster.pos_x:
-                    if bxy[1]>blue_monster.pos_y and bxy[1] < blue_monster.pos_y + 49:
+                if bxy[0]+14 > blue_monster.pos_x:
+                    if bxy[1]>blue_monster.pos_y and bxy[1] +14 < blue_monster.pos_y + 49:
                         bullets.remove(bxy)
+                        blue_drawBoom()
                         blue_monster.pos_x = pad_width + 30
                         blue_monster.pos_y = random.randrange(0, pad_heigth - 50)
                         ui.score +=10
@@ -151,6 +186,7 @@ def runGame():     #시작
                 if bxy[0] > red_monster.pos_x:
                     if bxy[1]>red_monster.pos_y and bxy[1] < red_monster.pos_y + 49:
                         bullets.remove(bxy)
+                        red_drawBoom()
                         red_monster.pos_x = pad_width + 30
                         red_monster.pos_y = random.randrange(0, pad_heigth - 50)
                         ui.score += 20
@@ -161,13 +197,14 @@ def runGame():     #시작
                 #     bullets.remove(bxy)
 
 
-        if len(booms) != 0:     #폭탄 움직임 충돌처리
-            for i,bxy in enumerate(booms):
-                bxy[0] += 5
-                booms[i][0] = bxy[0]
-                if bxy[0] > blue_monster.pos_x:
-                    if bxy[1]>blue_monster.pos_y and bxy[1] < blue_monster.pos_y + 49:
-                        booms.remove(bxy)
+        if len(missiles) != 0:     #폭탄 움직임 충돌처리
+            for i,bxy in enumerate(missiles):
+                bxy[0] += 10
+                missiles[i][0] = bxy[0]
+                if bxy[0]+30 > blue_monster.pos_x:
+                    if bxy[1]>blue_monster.pos_y and bxy[1]+30 < blue_monster.pos_y + 49:
+                        missiles.remove(bxy)
+                        blue_drawBigBoom()
                         blue_monster.pos_x = pad_width + 30
                         blue_monster.pos_y = random.randrange(0, pad_heigth - 50)
                         ui.score +=10
@@ -175,7 +212,8 @@ def runGame():     #시작
                             chicken.skillgauge +=10
                 if bxy[0] > red_monster.pos_x:
                     if bxy[1]>red_monster.pos_y and bxy[1] < red_monster.pos_y + 49:
-                        booms.remove(bxy)
+                        missiles.remove(bxy)
+                        red_drawBigBoom()
                         red_monster.pos_x = pad_width + 30
                         red_monster.pos_y = random.randrange(0, pad_heigth - 50)
                         ui.score += 20
@@ -192,13 +230,13 @@ def runGame():     #시작
         check_collision_chicken_monsters()
 
         pygame.display.update()
-        clock.tick(30)
+        clock.tick(15)
 
     pygame.quit()
     quit()
 
 def initGame():
-    global gamepad, clock, chicken, background1, background2, blue_monster, red_monster, bullet, ui, boom, fire
+    global gamepad, clock, chicken, background1, background2, blue_monster, red_monster, bullet, ui, missile, boom, bigboom
 
     pygame.init()
     gamepad = pygame.display.set_mode((pad_width, pad_heigth))
@@ -210,8 +248,9 @@ def initGame():
     red_monster = stage01_monster.Red_Monster()
     ui = ui.Ui()
     bullet = pygame.image.load('resources/images/bullet.png')
+    missile = pygame.image.load('resources/images/missile.png')
     boom = pygame.image.load('resources/images/boom.png')
-    fire = pygame.image.load('resources/images/fire.png')
+    bigboom = pygame.image.load('resources/images/bigboom.png')
     clock = pygame.time.Clock()
     runGame()
 
