@@ -29,12 +29,9 @@ class Missile:
         self.image = pygame.image.load('resources/images/missile.png')
         self.boomimage = pygame.image.load('resources/images/bigboom.png')
         self.change_pos_x = 10
-        self.pos_x_count = 0
 
     def pos(self):
-        if self.pos_x_count<20:
-            self.pos_x += self.change_pos_x
-            self.pos_x_count+=1
+        self.pos_x += self.change_pos_x
         if self.pos_x > 500:
             del(self)
 
