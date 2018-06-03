@@ -10,7 +10,7 @@ class Blue_Monster:
         self.pos_y = random.randrange(0, pad_heigth - 50)
         self.change_pos_y = random.randint(-8, 8)
         self.image = pygame.image.load('resources/images/blue_monster.png')
-        self.deathimage = pygame.image.load('resources/images/boom.png')
+        self.boomimage = pygame.image.load('resources/images/boom.png')
 
     def pos(self):
         self.pos_x -= 20
@@ -28,7 +28,7 @@ class Red_Monster:
         self.pos_y = random.randrange(0, pad_heigth - 50)
         self.change_pos_y = random.randint(-5, 5)
         self.image = pygame.image.load('resources/images/red_monster.png')
-        self.deathimage = pygame.image.load('resources/images/boom.png')
+        self.boomimage = pygame.image.load('resources/images/boom.png')
         self.hp = 2
 
     def pos(self):

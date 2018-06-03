@@ -10,8 +10,8 @@ pad_heigth = 480
 background_width = 799
 background_night_SW = False
 
-boom_time = time.time()
-boom_count = 1
+big_boom_time = time.time()
+big_boom_count = 0
 
 blue_monster_time = time.time()
 blue_monster_count = 0
@@ -19,7 +19,11 @@ blue_monster_count = 0
 red_monster_time = time.time()
 red_monster_count = 0
 
-def collide(a, b):
+
+bigboom_x = -150
+bigboom_y = -150
+
+def collide(a, b):   #충돌처리
     left_a, bottom_a, right_a, top_a = a.get_bb()
     left_b, bottom_b, right_b, top_b = b.get_bb()
 
@@ -29,6 +33,18 @@ def collide(a, b):
     if bottom_a > top_b : return False
 
     return True
+
+def collide_boom_monster(b):
+    left_a, bottom_a, right_a, top_a = bigboom_x, bigboom_y, bigboom_x+80,bigboom_y+80
+    left_b, bottom_b, right_b, top_b = b.get_bb()
+
+    if left_a > right_b : return False
+    if right_a < left_b : return False
+    if top_a < bottom_b : return False
+    if bottom_a > top_b : return False
+
+    return True
+
 
 def check_collision_chicken_monsters():  #닭, 몬스터 충돌
     for i in blue_monsters:
@@ -46,6 +62,7 @@ def check_collision_bullet_monsters():  #총알, 몬스터 충돌
             if collide(j, i):
                 blue_monsters.remove(i)
                 bullets.remove(j)
+                drawObject(i.boomimage,i.pos_x, i.pos_y)
                 ui.score +=10
                 if chicken.skillgauge <194:
                     chicken.skillgauge +=10
@@ -55,51 +72,71 @@ def check_collision_bullet_monsters():  #총알, 몬스터 충돌
                 i.hp -=1
                 if i.hp == 0:
                     red_monsters.remove(i)
+                    drawObject(i.boomimage,i.pos_x, i.pos_y)
                 bullets.remove(j)
                 ui.score +=20
                 if chicken.skillgauge <194:
                     chicken.skillgauge +=10
 
 def check_collision_missile_monsters():  #폭탄, 몬스터 충돌
+    global bigboom_x, bigboom_y, big_boom_time
     for i in blue_monsters:
         for j in missiles:
             if collide(j, i): 
+                bigboom_x, bigboom_y = j.pos_x, j.pos_y
+                drawObject(i.boomimage,i.pos_x, i.pos_y)
                 blue_monsters.remove(i)
                 missiles.remove(j)
+                big_boom_time = time.time()
                 ui.score +=10
                 if chicken.skillgauge <194:
                     chicken.skillgauge +=10
     for i in red_monsters:
         for j in missiles:
             if collide(j, i):
+                bigboom_x, bigboom_y = j.pos_x, j.pos_y
+                drawObject(i.boomimage,i.pos_x, i.pos_y)
                 red_monsters.remove(i)
                 missiles.remove(j)
+                big_boom_time = time.time()
                 ui.score +=20
                 if chicken.skillgauge <194:
                     chicken.skillgauge +=10
 def drawObject(obj,x,y):     #그리기
     gamepad.blit(obj,(x,y))
+   
+def createmonster():     #몹 생성
+    global blue_monster_time, red_monster_time
+    blue_monster_current = time.time()
+    blue_monster_count = blue_monster_time - blue_monster_current
+    if (blue_monster_count < -1):
+        blue_monsters.append(stage01_monster.Blue_Monster())
+        blue_monster_time = time.time()
 
-#=========================================================폭탄그리기========================================
-def blue_drawBoom():
-    boom_x = blue_monster.pos_x
-    boom_y = blue_monster.pos_y
-    gamepad.blit(boom, (boom_x, boom_y))
+    red_monster_current = time.time()
+    red_monster_count = red_monster_time - red_monster_current 
+    if (red_monster_count < -2):
+        red_monsters.append(stage01_monster.Red_Monster())
+        red_monster_time = time.time()
 
-def red_drawBoom():
-    boom_x = red_monster.pos_x
-    boom_y = red_monster.pos_y
-    gamepad.blit(boom, (boom_x, boom_y))
+#=========================================================폭발그리기========================================
 
-def blue_drawBigBoom():
-    boom_x = blue_monster.pos_x-25
-    boom_y = blue_monster.pos_y-25
-    gamepad.blit(bigboom, (boom_x, boom_y))
+def drawbigboom():    #폭발그리기, 충돌처리
+    global big_boom_time
+    big_boom_current = time.time()
+    big_boom_count = big_boom_time - big_boom_current
+    print(big_boom_count)
+    if (big_boom_count > -10):
+        drawObject(bigboomimage, bigboom_x-30, bigboom_y-30)
+        for i in blue_monsters:
+            if collide_boom_monster(i):
+                drawObject(i.boomimage,i.pos_x, i.pos_y)
+                blue_monsters.remove(i)
+        for i in red_monsters:
+            if collide_boom_monster(i):
+                drawObject(i.boomimage,i.pos_x, i.pos_y)
+                red_monsters.remove(i)
 
-def red_drawBigBoom():
-    boom_x = red_monster.pos_x-25
-    boom_y = red_monster.pos_y-25
-    gamepad.blit(bigboom, (boom_x, boom_y))
 #========================================================= UI========================================
 
 
@@ -141,6 +178,7 @@ def runGame():     #시작
                     chicken.change_pos_x = 25
                 elif event.key == pygame.K_LCTRL:
                     bullets.append(bullet.Bullet())
+                    print(red_monster_count)
                 elif event.key == pygame.K_LALT:
                     if ui.boom_count >0 :   
                         ui.boom_count-=1
@@ -162,25 +200,10 @@ def runGame():     #시작
                     chicken.change_pos_y = 0
                 elif event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
                     chicken.change_pos_x = 0   #키입력
+
 #============================몹 생성=============================================
-        blue_monster_current = time.time()
-        blue_monster_count = blue_monster_time - blue_monster_current 
-        if (blue_monster_count < -1):
-            blue_monsters.append(stage01_monster.Blue_Monster())
-            blue_monster_count = -1
-            blue_monster_time = time.time()
 
-        red_monster_current = time.time()
-        red_monster_count = red_monster_time - red_monster_current 
-        if (red_monster_count < -2):
-            red_monsters.append(stage01_monster.Red_Monster())
-            red_monster_count = -2
-            red_monster_time = time.time()
-           
-
-
-
-
+        createmonster()
 
 #======================================position update======================================
         chicken.pos()
@@ -235,6 +258,9 @@ def runGame():     #시작
         check_collision_chicken_monsters()
         check_collision_bullet_monsters()
         check_collision_missile_monsters()
+
+        drawbigboom()
+
         pygame.display.update()
         clock.tick(15)
 
@@ -244,7 +270,7 @@ def runGame():     #시작
 def initGame():
     global gamepad, clock, chicken, bullets, missiles
     global blue_monsters, red_monsters, ui, missile, boom, bigboom
-    global background1, background2, missile_image
+    global background1, background2, missile_image, bigboomimage
     pygame.init()
     gamepad = pygame.display.set_mode((pad_width, pad_heigth))
     pygame.display.set_caption('ChickenGun')
@@ -256,6 +282,7 @@ def initGame():
     bullets = []
     missiles = []
     missile_image = pygame.image.load('resources/images/missile.png')
+    bigboomimage = pygame.image.load('resources/images/bigboom.png')
     ui = ui.Ui()
     clock = pygame.time.Clock()
     runGame()
